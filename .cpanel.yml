@@ -1,5 +1,5 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/user/100rupeematrimony.com/
+    - export DEPLOYPATH=/home/vstinnovations/100rupeematrimony.com/
     - /bin/cp -r * $DEPLOYPATH
