@@ -2,4 +2,4 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/user/100rupeematrimony.com/
-   - /bin/cp -R images $DEPLOYPATH
+   - /bin/cp -R matrimony $DEPLOYPATH
