@@ -32,10 +32,10 @@
         white-space: nowrap;
     }
     .outer-search {
-        position: absolute; top: 45%; z-index: 1;<?php if ($found == 1) {?>margin-left: 165px;<?php } elseif ($found == 2) { ?> margin-left: 240px;<?php } else { ?> margin-left: 95px;<?php } ?>
+        position: absolute; top: 25%; z-index: 1;<?php if ($found == 1) {?>margin-left: 165px;<?php } elseif ($found == 2) { ?> margin-left: 240px;<?php } else { ?> margin-left: 95px;<?php } ?>
     }
     .btn-search {
-        border-radius: 3px !important;
+        border-radius: 30px !important;
     }
 </style>
 <div class="col-lg-12">
@@ -46,7 +46,7 @@
                     <!-- Slide -->
                     <?php foreach ($slider_image as $image): ?>
                         <div class="swiper-slide" data-swiper-autoplay="10000">
-                            <div class="slice px-3 holder-item holder-item-light has-bg-cover bg-size-cover same-height" data-same-height="#div_properties_search" style="height: 650px; background-size: cover; background-position: center; background-image: url(<?=base_url()?>uploads/home_page/slider_image/<?=$image['img']?>); background-position: bottom bottom;">
+                            <div class="slice px-3 holder-item holder-item-light has-bg-cover bg-size-cover same-height" data-same-height="#div_properties_search" style="height: 100vh; background-size: cover; background-position: center; background-image: url(<?=base_url()?>uploads/home_page/slider_image/<?=$image['img']?>); background-position: bottom bottom;">
                             </div>
                         </div>
                     <?php endforeach ?>
@@ -58,8 +58,48 @@
                 </div>
             </div>
         </div>
-        <div class="container pl-0">
+        <div class="container pl-0" >
+            <div id="login_btn_container">
+        <?php
+												if (!empty($this->session->userdata['member_id'])) {
+												?>
+							                    	<a href="<?=base_url()?>home/logout" class="btn btn-styled btn-xs btn-base-1 "><i class="fa fa-power-off"></i> <?php echo translate('log_out')?></a>
+												<?php	
+												}
+												else{
+												?>	
+		                                            <a href="<?=base_url()?>home/login" class="btn btn-styled btn-xs btn-base-1"><i class="fa fa-power-off"></i> <?php echo translate('log_in')?></a>
+		                                           <!-- <a href="<?=base_url()?>home/registration" class="btn btn-styled btn-xs btn-base-1 btn-shadow"><i class="fa fa-user"></i> <?php echo translate('register')?></a> -->
+												<?php
+												}
+                                                ?>
+                                                </div>
+                                               
+                                               
+						      
             <div class="outer-search">
+            <div class="container  text-center slider_container">
+                                                      <!-- Brand/Logo -->
+                                                <a class="navbar-brand" href="<?=base_url()?>home/">
+						        	<?php
+						        		$header_logo_info = $this->db->get_where('frontend_settings', array('type' => 'header_logo'))->row()->value;
+	                                    $header_logo = json_decode($header_logo_info, true);
+	                                    if (file_exists('uploads/header_logo/'.$header_logo[0]['image'])) {
+	                                    ?>
+	                                        <img src="<?=base_url()?>uploads/header_logo/<?=$header_logo[0]['image']?>" class="img-responsive" height="100%">
+	                                    <?php
+	                                    }
+	                                    else {
+	                                    ?>
+	                                        <img src="<?=base_url()?>uploads/header_logo/default_image.png" class="img-responsive" height="100%">
+	                                    <?php
+	                                    }
+	                                ?>
+                                </a>
+                                <h2 style="color: white;">Say no to monthly subscriptions.</h2>
+                                <div class="small"  style="color: white;">Communicate with suitable Matches for just 100 Rupee a day !!!</div>
+                                <a href="<?=base_url()?>home/registration" class="btn btn-styled btn-xs btn-base-5 btn-shadow" style="min-width:200px;    margin: 25px 0; text-transform:uppercase; font-weight:bold"><?php echo translate('Register Now free')?></a> 
+                                            </div>
                 <h4 class="text-white text-center mb-4">
                     <span style="text-shadow: 4px 3px 6px #000;"><?=$home_searching_heading?></span>
                 </h4>
@@ -122,7 +162,7 @@
                                 }
                                 if ($this->db->get_where('frontend_settings', array('type' => 'language'))->row()->value == "yes") {
                             ?>
-                            <div class="col-lg-2 col-md-2 col-sm-6 col-6">
+                            <div class="col-lg-2 col-md-2 col-sm-6 col-6" style="display:none">
                                 <div class="form-group has-feedback">
                                     <label for="" class="text-uppercase text-white"><?php echo translate('mother_tongue')?></label>
                                     <?= $this->Crud_model->select_html('language', 'language', 'name', 'edit', 'form-control form-control-sm selectpicker', '', '', '', ''); ?>

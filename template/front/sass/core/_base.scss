@@ -1703,7 +1703,7 @@ pre {
 }
 @media(max-width: 991px) {
     .background-image-holder .holder-item {
-        height: auto;
+        height: 100vh !important;
         padding: 4rem 0;
     }
 }

@@ -1,1 +1,45 @@
 // Put here all the styles you want to add or edit
+.background-image-holder
+{.swiper-slide{
+    &:before{
+        content: "";
+        position: absolute;
+        width:100%;
+        height: 100%;
+        background-color: rgba(15,51,89,0.90);
+        z-index: 99;
+    }
+}
+}
+#login_btn_container{
+    position: absolute;right:60px;
+    top:30px;
+    z-index: 99;
+    .btn{
+        min-width: 100px;
+    }
+}
+.slider_container{
+    // position: absolute;
+    z-index: 999;
+    top: 0;
+    text-align: center;
+
+}
+.outer-search{
+    .form-control{
+        background-color: transparent;
+    }
+    ::placeholder { /* Chrome, Firefox, Opera, Safari 10.1+ */
+        color: white;
+        opacity: 1; /* Firefox */
+      }
+      
+      :-ms-input-placeholder { /* Internet Explorer 10-11 */
+        color: white;
+      }
+      
+      ::-ms-input-placeholder { /* Microsoft Edge */
+        color: white;
+      }
+}

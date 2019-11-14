@@ -27,6 +27,7 @@
     </div>
 </section>
 <?php
+include_once'process.php';
     if($home_members_status=='yes'){
         include_once'premium_members.php';
     }
@@ -43,7 +44,7 @@
         include_once'contact.php';
     }
 ?>
-<script src="<?=base_url()?>template/front/js/jquery.inputmask.bundle.min.js"></script>
+<!-- <script src="<?=base_url()?>template/front/js/jquery.inputmask.bundle.min.js"></script> -->
 <script>
     $(document).ready(function(){
         $(".height_mask").inputmask({

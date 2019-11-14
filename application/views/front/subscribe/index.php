@@ -78,7 +78,7 @@
                                 <style>
                                     .span-text {
                                         font-weight: 500;
-                                        font-family: "Roboto Condensed", sans-serif;
+                                        font-family: 'Montserrat', sans-serif;
                                         letter-spacing: 0.1rem;
                                         text-transform: uppercase;
                                         font-style: normal;
