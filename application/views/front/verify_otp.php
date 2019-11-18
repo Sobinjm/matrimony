@@ -33,7 +33,6 @@
         <link rel="stylesheet" href="<?=base_url()?>template/front/fonts/linea/basic/linea-icons.css" type="text/css">
         <link rel="stylesheet" href="<?=base_url()?>template/front/fonts/linea/ecommerce/linea-icons.css" type="text/css">
         <link rel="stylesheet" href="<?=base_url()?>template/front/fonts/linea/software/linea-icons.css" type="text/css">
-  
         <!-- Global style (main) -->
         <?php
             $theme_color = $this->db->get_where('frontend_settings', array('type' => 'theme_color'))->row()->value;
@@ -72,7 +71,7 @@
         	<?php
         	}
             elseif ($theme_color == 'blue') { ?>
-        		<link id="stylesheet" type="text/css" href="<?=base_url()?>template/front/css/global-style-blue.css" rel="stylesheet" media="screen">
+        		<link id="stylesheet" type="text/css" href="<?=base_url()?>template/front/css/global-style-blus.css" rel="stylesheet" media="screen">
         	<?php
         	}
         	elseif ($theme_color == 'ightseagreen') { ?>
@@ -83,7 +82,6 @@
         <!-- Custom style - Remove if not necessary -->
         <link type="text/css" href="<?=base_url()?>template/front/css/custom-style.css" rel="stylesheet">
         <!-- Favicon -->
-
         <script src="<?=base_url()?>template/front/vendor/jquery/jquery.min.js"></script>
 
         <?php
@@ -102,7 +100,11 @@
         ?>
     </head>
     <body>
-        <?php include 'preloader.php';?>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                $('.top_bar_right').load('<?php echo base_url(); ?>home/top_bar_right');
+            });
+        </script>
         <?php include_once 'header/header.php';?>
         <?php
             $login_image = $this->db->get_where('frontend_settings', array('type' => 'login_image'))->row()->value;
@@ -118,64 +120,33 @@
                         <div class="form-card form-card--style-2 z-depth-3-top">
                             <div class="form-body">
                                 <div class="text-center px-2">
-                                    <h4 class="heading heading-4 strong-400 mb-4 font_light"><?php echo translate('log_in_to_your_account')?></h4>
-                                    <?php
-                                        if (!empty($register_success)) {
-                                        ?>
-                                            <p class="text-success"><?=$register_success?></p>
-                                        <?php
-                                        }
-                                    ?>
+                                    <h4 class="heading heading-4 strong-400 mb-4 font_light"><?php echo 'Mobilr OTP Verification';?></h4>
                                 </div>
-                                <form class="form-default" role="form" method="post" action="<?=base_url()?>home/check_login">
+                                <form class="form-default" role="form" method="post" action="<?=base_url()?>home/verify_otp">
                                     <div class="row">
+                                    <p style="color: red">
+                                                <?php
+                                                    if (!empty($this->session->flashdata('otp_send'))){
+                                                        echo $this->session->flashdata('otp_send');
+                                                    }
+                                                    
+                                                ?>
+                                            </p>
                                         <div class="col-12">
                                             <div class="form-group">
-                                                <label class="text-uppercase font_light"><?php echo translate('email')?></label>
-                                                <input type="email" class="form-control input-sm" name="email" autofocus required>
+                                                <label class="text-uppercase font_light"><?php echo 'Enter the OTP';?></label>
+                                                <input type="text" class="form-control input-sm" name="otp" autofocus required>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row">
-                                        <div class="col-lg-12">
-                                            <div class="form-group has-feedback">
-                                                <label class="text-uppercase font_light"><?php echo translate('password')?></label>
-                                                <input type="password" class="form-control input-sm" name="password" required>
-                                            </div>
-                                            <p style="color: red">
-                                                <?php
-                                                    if (!empty($login_error)){
-                                                        echo $login_error;
-                                                    }
-                                                ?>
-                                            </p>
-                                            <p style="color: green">
-                                                <?php
-                                                    if (!empty($sent_email)){
-                                                        echo $sent_email;
-                                                    }
-                                                ?>
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <?php if(!empty($authURL)){ ?>
-    <a href="<?php echo $authURL; ?>"><img src="<?php echo base_url('assets/images/fb-login-btn.png'); ?>"> Face Book</a>
-
-                                    <?php } ?>
-                                    <button type="submit" class="btn btn-styled btn-sm btn-block btn-base-1 z-depth-2-bottom mt-4"><?php echo translate('log_in')?></button>
+                                    <button type="submit" class="btn btn-styled btn-sm btn-block btn-base-1 z-depth-2-bottom mt-4"><?php echo translate('submit')?></button>
                                     <div class="row pt-3">
-                                        <div class="col-6" style="font-size: 12px;">
-                                            <div class="checkbox">
-                                                <input type="checkbox" name="remember_me" id="remember_me" value="checked">
-                                                <label for="remember_me"><span class="c-gray-light"><?php echo translate('remember_me')?></span></label>
-                                            </div>
-                                        </div>
-                                        <div class="col-6 text-right" style="font-size: 12px;">
-                                            <a href="<?=base_url()?>home/forget_pass" class="c-gray-light"><?php echo translate('recover_password')?></a>
+                                        <div class="col-12 text-center" style="font-size: 12px;">
+                                            <a class="c-gray-light" href="<?=base_url()?>home/send_otp">Resend OTP</a>
                                         </div>
                                     </div>
                                 </form>
-                                <div class="row">
+                                <div class="row mt-3">
                                     <div class="col-12 text-center" style="font-size: 12px;">
                                         <span class="c-gray-light"><?php echo translate('new_here?')?></span><a class="c-gray-light" href="<?=base_url()?>home/registration"> <u><?php echo translate('create_an_account_from_here!')?></u></a>
                                     </div>
@@ -224,11 +195,5 @@
         <script src="<?=base_url()?>template/front/vendor/lightgallery/js/lg-video.js"></script>
         <!-- App JS -->
         <script src="<?=base_url()?>template/front/js/wpx.app.js"></script>
-
-        <script type="text/javascript">
-            $(document).ready(function(){
-                $('.top_bar_right').load('<?php echo base_url(); ?>home/top_bar_right');
-            });
-        </script>
     </body>
 </html>

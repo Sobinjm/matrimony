@@ -12,6 +12,9 @@ class Home extends CI_Controller {
 
     function __construct() {
         parent::__construct();
+        
+        // Load facebook library
+        $this->load->library('facebook');
         $this->load->library('paypal');
         $this->load->library('pum');
         $this->Crud_model->timezone();
@@ -3124,7 +3127,7 @@ class Home extends CI_Controller {
                     recache();
 
                     if ($this->Email_model->subscruption_email('member', $payment->member_id, $payment->plan_id)) {
-                        //$this->session->set_flashdata('alert', 'email_sent');
+                        $this->session->set_flashdata('alert', 'email_sent');
                     } else {
                         $this->session->set_flashdata('alert', 'not_sent');
                     }
@@ -3405,75 +3408,54 @@ class Home extends CI_Controller {
 
         $this->load->view('front/index', $page_data);
     }
-
-    function login()
+    function fblogin()
     {
-        if ($this->member_permission() == TRUE) {
-            redirect(base_url().'home/', 'refresh');
-        }
-        if ($this->member_permission() == TRUE) {
-            redirect(base_url().'home/', 'refresh');
-        }
-        else{
-            $page_data['page'] = "login";
-            $page_data['login_error'] = "";
-            if ($this->session->flashdata('alert') == "login_error") {
-                $page_data['login_error'] = translate('your_email_or_password_is_invalid!');
-            }
-            elseif ($this->session->flashdata('alert') == "blocked") {
-                $page_data['login_error'] = translate('you_have_been_blocked_by_the_admin');
-            }
-            elseif ($this->session->flashdata('alert') == "not_sent") {
-                $page_data['login_error'] = translate('error_sending_email');
-            }
-            elseif ($this->session->flashdata('alert') == "not_sent") {
-                $page_data['login_error'] = translate('the_email_you_have_entered_is_invalid');
-            }
-            elseif ($this->session->flashdata('alert') == "email_sent") {
-                $page_data['sent_email'] = translate('please_check_your_email_for_new_password');
-            }
-            elseif ($this->session->flashdata('alert') == "register_success") {
-                $page_data['register_success'] = translate('you_have_registered_successfully._please_log_in_to_continue');
-            }
-             elseif ($this->session->flashdata('alert') == "unapproved") {
-                $page_data['login_error'] = translate('account_not_approved._wait_for_approval!');
-            }
+        // Check if user is logged in
+        if($this->facebook->is_authenticated()){
+            // Get user facebook profile details
+            $fbUser = $this->facebook->request('get', '/me?fields=id,first_name,last_name,email,link,gender,picture');
+            // print_r($fbUser);
+            // Preparing data for database insertion
+            $userData['oauth_provider'] = 'facebook';
+            $userData['oauth_uid']    = !empty($fbUser['id'])?$fbUser['id']:'';
+            $userData['first_name']    = !empty($fbUser['first_name'])?$fbUser['first_name']:'';
+            $userData['last_name']    = !empty($fbUser['last_name'])?$fbUser['last_name']:'';
+            $userData['email']        = !empty($fbUser['email'])?$fbUser['email']:'';
+            $userData['gender']        = !empty($fbUser['gender'])?$fbUser['gender']:'';
+            $userData['picture']    = !empty($fbUser['picture']['data']['url'])?$fbUser['picture']['data']['url']:'';
+            $userData['link']        = !empty($fbUser['link'])?$fbUser['link']:'';
 
-            $this->load->view('front/login', $page_data);
-        }
-    }
-
-    function login_msg()
-    {
-        if ($this->member_permission() == TRUE) {
-            redirect(base_url().'home/', 'refresh');
-        }
-        if ($this->member_permission() == TRUE) {
-            redirect(base_url().'home/', 'refresh');
-        }
-        else{
-            $page_data['page'] = "login_msg";
-            $this->load->view('front/login_msg', $page_data);
-        }
-        
-    }
-
-    function check_login()
-    {
-        if ($this->member_permission() == TRUE) {
-            redirect(base_url().'home/', 'refresh');
-        }
-        else{
-            $username = $this->input->post('email');
-            $password = sha1($this->input->post('password'));
-
-            $remember_me = $this->input->post('remember_me');
-            $member_approval = $this->db->get_where('general_settings', array('type' => 'member_approval_by_admin'))->row()->value;
-            $result = $this->db->get_where('member',array('email'=>$username, 'password'=>$password))->row();
+            $result = $this->db->get_where('member',array('email'=>$userData['email'],'login_type'=>'1'))->row();
 
             $data = array();
             if($result)
             {
+                if ($result->mobile_status != '0') {
+                   
+                    $data['login_state'] = 'yes';
+                            $data['member_id'] = $result->member_id;
+                            $data['member_name'] = $result->first_name;
+                            $data['member_email'] = $result->email;
+
+                            if ($remember_me == 'checked') {
+                                
+                                setcookie('cookie_member_id', $this->session->userdata('member_id'), time() + (1296000), "/");
+                                setcookie('cookie_member_name', $this->session->userdata('member_name'), time() + (1296000), "/");
+                                setcookie('cookie_member_email', $this->session->userdata('member_email'), time() + (1296000), "/");
+                                $data['mobile_otp'] = $result->mobile_status;
+                                $this->session->set_userdata($data);
+                            } else {
+                                $data['mobile_otp'] = $result->mobile_status;
+                                $this->session->set_userdata($data);
+                            }
+                    // $this->session->set_userdata($data);
+                    $data['mobile_no']=$result->mobile;
+                    redirect( base_url().'home/verify_otp', 'refresh' );
+                    // $this->load->view('front/verify_otp', $page_data);
+                }
+                else{
+
+                
                 if($member_approval == 'yes'){
                     if ($result->status == "approved") {
                         if ($result->is_blocked == "no") {
@@ -3528,6 +3510,555 @@ class Home extends CI_Controller {
                         redirect( base_url().'home/login', 'refresh' );
                     }
                 }
+            }
+              
+            }
+            // echo $userData['picture']; 
+            // echo $userData['gender'];
+            // echo $userData['first_name'];
+            // die();
+            // Insert or update user data
+            // $userID = $this->user->checkUser($userData);
+            
+            // Check user data insert or update status
+            if(!empty($userID)){
+                $page_data['userData'] = $userData;
+                $this->session->set_userdata('userData', $userData);
+            }else{
+                $page_data['userData'] = array();
+            }
+            
+            // Get logout URL
+            $page_data['logoutURL'] = $this->facebook->logout_url();
+
+
+                
+                    
+                        // ------------------------------------Profile Image------------------------------------ //
+                        // $profile_image[] = array('profile_image'    =>  'default.jpg',
+                        //                             'thumb'         =>  'default_thumb.jpg'
+                        //                     );
+                        $profile_image[] = array('profile_image'    =>  $userData['picture'],
+                                            'thumb'         =>  $userData['picture']
+                                    );
+                        $profile_image = json_encode($profile_image);
+                        // ------------------------------------Profile Image------------------------------------ //
+
+                        // ------------------------------------Basic Info------------------------------------ //
+                        $basic_info[] = array('age'                 => '',
+                                            'marital_status'        => '',
+                                            'number_of_children'    => '',
+                                            'area'                  => '',
+                                            'on_behalf'             => '1'
+                                            );
+                        $basic_info = json_encode($basic_info);
+                        // ------------------------------------Basic Info------------------------------------ //
+
+                        // ------------------------------------Present Address------------------------------------ //
+                        $present_address[] = array('country'        => '',
+                                            'city'                  => '',
+                                            'state'                 => '',
+                                            'postal_code'           => ''
+                                            );
+                        $present_address = json_encode($present_address);
+                        // ------------------------------------Present Address------------------------------------ //
+
+                        // ------------------------------------Education & Career------------------------------------ //
+                        $education_and_career[] = array('highest_education' => '',
+                                            'occupation'                    => '',
+                                            'annual_income'                 => ''
+                                            );
+                        $education_and_career = json_encode($education_and_career);
+                        // ------------------------------------Education & Career------------------------------------ //
+
+                        // ------------------------------------ Physical Attributes------------------------------------ //
+                        $physical_attributes[] = array('weight'     => '',
+                                            'eye_color'             => '',
+                                            'hair_color'            => '',
+                                            'complexion'            => '',
+                                            'blood_group'           => '',
+                                            'body_type'             => '',
+                                            'body_art'              => '',
+                                            'any_disability'        => ''
+                                            );
+                        $physical_attributes = json_encode($physical_attributes);
+                        // ------------------------------------ Physical Attributes------------------------------------ //
+
+                        // ------------------------------------ Language------------------------------------ //
+                        $language[] = array('mother_tongue'         => '',
+                                            'language'              => '',
+                                            'speak'                 => '',
+                                            'read'                  => ''
+                                            );
+                        $language = json_encode($language);
+                        // ------------------------------------ Language------------------------------------ //
+
+                        // ------------------------------------Hobbies & Interest------------------------------------ //
+                        $hobbies_and_interest[] = array('hobby'     => '',
+                                            'interest'              => '',
+                                            'music'                 => '',
+                                            'books'                 => '',
+                                            'movie'                 => '',
+                                            'tv_show'               => '',
+                                            'sports_show'           => '',
+                                            'fitness_activity'      => '',
+                                            'cuisine'               => '',
+                                            'dress_style'           => ''
+                                            );
+                        $hobbies_and_interest = json_encode($hobbies_and_interest);
+                        // ------------------------------------Hobbies & Interest------------------------------------ //
+
+                        // ------------------------------------ Personal Attitude & Behavior------------------------------------ //
+                        $personal_attitude_and_behavior[] = array('affection'   => '',
+                                            'humor'                 => '',
+                                            'political_view'        => '',
+                                            'religious_service'     => ''
+                                            );
+                        $personal_attitude_and_behavior = json_encode($personal_attitude_and_behavior);
+                        // ------------------------------------ Personal Attitude & Behavior------------------------------------ //
+
+                        // ------------------------------------Residency Information------------------------------------ //
+                        $residency_information[] = array('birth_country'    => '',
+                                            'residency_country'     => '',
+                                            'citizenship_country'   => '',
+                                            'grow_up_country'       => '',
+                                            'immigration_status'    => ''
+                                            );
+                        $residency_information = json_encode($residency_information);
+                        // ------------------------------------Residency Information------------------------------------ //
+
+                        // ------------------------------------Spiritual and Social Background------------------------------------ //
+                        $spiritual_and_social_background[] = array('religion'   => '',
+                                            'caste'                 => '',
+                                            'sub_caste'             => '',
+                                            'ethnicity'             => '',
+                                            'u_manglik'             => '',
+                                            'personal_value'        => '',
+                                            'family_value'          => '',
+                                            'community_value'       => '',
+                                            'family_status'         =>  ''
+                                            );
+                        $spiritual_and_social_background = json_encode($spiritual_and_social_background);
+                        // ------------------------------------Spiritual and Social Background------------------------------------ //
+
+                        // ------------------------------------ Life Style------------------------------------ //
+                        $life_style[] = array('diet'                => '',
+                                            'drink'                 => '',
+                                            'smoke'                 => '',
+                                            'living_with'           => ''
+                                            );
+                        $life_style = json_encode($life_style);
+                        // ------------------------------------ Life Style------------------------------------ //
+
+                        // ------------------------------------ Astronomic Information------------------------------------ //
+                        $astronomic_information[] = array('sun_sign'    => '',
+                                            'moon_sign'                 => '',
+                                            'time_of_birth'             => '',
+                                            'city_of_birth'             => ''
+                                            );
+                        $astronomic_information = json_encode($astronomic_information);
+                        // ------------------------------------ Astronomic Information------------------------------------ //
+
+                        // ------------------------------------Permanent Address------------------------------------ //
+                        $permanent_address[] = array('permanent_country'    => '',
+                                            'permanent_city'                => '',
+                                            'permanent_state'               => '',
+                                            'permanent_postal_code'         => ''
+                                            );
+                        $permanent_address = json_encode($permanent_address);
+                        // ------------------------------------Permanent Address------------------------------------ //
+
+                        // ------------------------------------Family Information------------------------------------ //
+                        $family_info[] = array('father'             => '',
+                                            'mother'                => '',
+                                            'brother_sister'        => ''
+                                            );
+                        $family_info = json_encode($family_info);
+                        // ------------------------------------Family Information------------------------------------ //
+
+                        // --------------------------------- Additional Personal Details--------------------------------- //
+                        $additional_personal_details[] = array('home_district'  => '',
+                                            'family_residence'              => '',
+                                            'fathers_occupation'            => '',
+                                            'special_circumstances'         => ''
+                                            );
+                        $additional_personal_details = json_encode($additional_personal_details);
+                        // --------------------------------- Additional Personal Details--------------------------------- //
+
+                        // ------------------------------------ Partner Expectation------------------------------------ //
+                        $partner_expectation[] = array('general_requirement'    => '',
+                                            'partner_age'                       => '',
+                                            'partner_height'                    => '',
+                                            'partner_weight'                    => '',
+                                            'partner_marital_status'            => '',
+                                            'with_children_acceptables'         => '',
+                                            'partner_country_of_residence'      => '',
+                                            'partner_religion'                  => '',
+                                            'partner_caste'                     => '',
+                                            'partner_subcaste'                  => '',
+                                            'partner_complexion'                => '',
+                                            'partner_education'                 => '',
+                                            'partner_profession'                => '',
+                                            'partner_drinking_habits'           => '',
+                                            'partner_smoking_habits'            => '',
+                                            'partner_diet'                      => '',
+                                            'partner_body_type'                 => '',
+                                            'partner_personal_value'            => '',
+                                            'manglik'                           => '',
+                                            'partner_any_disability'            => '',
+                                            'partner_mother_tongue'             => '',
+                                            'partner_family_value'              => '',
+                                            'prefered_country'                  => '',
+                                            'prefered_state'                    => '',
+                                            'prefered_status'                   => ''
+                                            );
+                        $partner_expectation = json_encode($partner_expectation);
+                        // ------------------------------------ Partner Expectation------------------------------------ //
+
+                        // ------------------------------------Privacy Status------------------------------------ //
+                        $privacy_status[] = array(
+                                            'present_address'                 => 'no',
+                                            'education_and_career'            => 'no',
+                                            'physical_attributes'             => 'no',
+                                            'language'                        => 'no',
+                                            'hobbies_and_interest'            => 'no',
+                                            'personal_attitude_and_behavior'  => 'no',
+                                            'residency_information'           => 'no',
+                                            'spiritual_and_social_background' => 'no',
+                                            'life_style'                      => 'no',
+                                            'astronomic_information'          => 'no',
+                                            'permanent_address'               => 'no',
+                                            'family_info'                     => 'no',
+                                            'additional_personal_details'     => 'no',
+                                            'partner_expectation'             => 'yes'
+                                            );
+                        $privacy_status = json_encode($privacy_status);
+                        // ------------------------------------Privacy Status------------------------------------ //
+
+                        // ------------------------------------Pic Privacy Status------------------------------------ //
+                        $pic_privacy[] = array(
+                                            'profile_pic_show'        => 'all',
+                                            'gallery_show'            => 'premium'
+
+                                            );
+                        $data_pic_privacy = json_encode($pic_privacy);
+                        // ------------------------------------Pic Privacy Status------------------------------------ //
+
+                        // --------------------------------- Additional Personal Details--------------------------------- //
+                        $package_info[] = array('current_package'   => $this->Crud_model->get_type_name_by_id('plan', '1'),
+                                                'package_price'     => $this->Crud_model->get_type_name_by_id('plan', '1', 'amount'),
+                                                'payment_type'      => 'None',
+                                            );
+                        $package_info = json_encode($package_info);
+                        // --------------------------------- Additional Personal Details--------------------------------- //
+
+                            
+                            $data['status']     = 0;
+                            $data['first_name'] = $userData['first_name'];
+                            $data['last_name'] = $userData['last_name'];
+                            $data['gender'] = '';
+                            $data['email'] = $userData['email'];
+                            $data['date_of_birth'] = '';
+                            $data['height'] = 0.00;
+                            $data['mobile'] ='';
+                            $data['password'] = sha1('123456');
+                            $data['profile_image'] = $profile_image;
+                            $data['introduction'] = '';
+                            $data['basic_info'] = $basic_info;
+                            $data['present_address'] = $present_address;
+                            $data['family_info'] = $family_info;
+                            $data['education_and_career'] = $education_and_career;
+                            $data['physical_attributes'] = $physical_attributes;
+                            $data['language'] = $language;
+                            $data['hobbies_and_interest'] = $hobbies_and_interest;
+                            $data['personal_attitude_and_behavior'] = $personal_attitude_and_behavior;
+                            $data['residency_information'] = $residency_information;
+                            $data['spiritual_and_social_background'] = $spiritual_and_social_background;
+                            $data['life_style'] = $life_style;
+                            $data['astronomic_information'] = $astronomic_information;
+                            $data['permanent_address'] = $permanent_address;
+                            $data['additional_personal_details'] = $additional_personal_details;
+                            $data['partner_expectation'] = $partner_expectation;
+                            $data['interest'] = '[]';
+                            $data['short_list'] = '[]';
+                            $data['followed'] = '[]';
+                            $data['ignored'] = '[]';
+                            $data['ignored_by'] = '[]';
+                            $data['gallery'] = '[]';
+                            $data['happy_story'] = '[]';
+                            $data['package_info'] = $package_info;
+                            $data['payments_info'] = '[]';
+                            $data['interested_by'] = '[]';
+                            $data['follower'] = 0;
+                            $data['notifications'] = '[]';
+                            $data['membership'] = 1;
+                            $data['profile_status'] = 1;
+                            $data['is_closed'] = 'no';
+                            $data['member_since'] = date("Y-m-d H:i:s");
+                            $data['express_interest'] = $this->db->get_where('plan', array('plan_id'=> 1))->row()->express_interest;
+                            $data['direct_messages'] = $this->db->get_where('plan', array('plan_id'=> 1))->row()->direct_messages;
+                            $data['photo_gallery'] = $this->db->get_where('plan', array('plan_id'=> 1))->row()->photo_gallery;
+                            $data['profile_completion'] = 0;
+                            $data['is_blocked'] = 'no';
+                            $data['privacy_status'] = $privacy_status;
+                            $data['pic_privacy'] = $data_pic_privacy;
+                            $data['report_profile'] = '[]';
+
+
+                            $this->db->insert('member', $data);
+                            $insert_id = $this->db->insert_id();
+                            $member_profile_id = strtoupper(substr(hash('sha512', rand()), 0, 8)).$insert_id;
+
+                            $this->db->where('member_id', $insert_id);
+                            $this->db->update('member', array('member_profile_id' => $member_profile_id));
+                            recache();
+
+                            if($member_approval == 'yes'){
+                                // $msg = 'done';
+                                if ($this->Email_model->account_opening_from_users('member', $data['email'], $this->input->post('password')) == false) {
+                                    //$msg = 'done_but_not_sent';
+                                } else {
+                                    $msg = 'done_and_sent';
+                                }
+                                $this->Email_model->member_registration_email_to_admin($insert_id);
+
+                                $this->session->set_flashdata('alert', 'register_success');
+                                redirect(base_url().'home/login_msg', 'refresh');
+                            }else{
+                               // $msg = 'done';
+                                if ($this->Email_model->account_opening('member', $data['email'], $this->input->post('password')) == false) {
+                                    //$msg = 'done_but_not_sent';
+                                } else {
+                                    $msg = 'done_and_sent';
+                                }
+                                $this->Email_model->member_registration_email_to_admin($insert_id);
+                                $this->session->set_flashdata('alert', 'register_success');
+                                redirect(base_url().'home/login', 'refresh'); 
+                            }
+                        
+                            
+            
+        }else{
+            // Get login URL
+          
+            $page_data['authURL'] =  $this->facebook->login_url();
+            $page_data['page'] = "login";
+            $page_data['login_error'] = "";
+            
+            $this->load->view('front/login', $page_data);
+        }
+
+    }
+  
+
+    function login()
+    {
+       
+            // Get login URL
+            $page_data['authURL'] =  $this->facebook->login_url();
+    
+        
+// print_r($page_data);
+
+        if ($this->member_permission() == TRUE) {
+            redirect(base_url().'home/', 'refresh');
+        }
+        if ($this->member_permission() == TRUE) {
+            redirect(base_url().'home/', 'refresh');
+        }
+        else{
+            $page_data['page'] = "login";
+            $page_data['login_error'] = "";
+            if ($this->session->flashdata('alert') == "login_error") {
+                $page_data['login_error'] = translate('your_email_or_password_is_invalid!');
+            }
+            elseif ($this->session->flashdata('alert') == "blocked") {
+                $page_data['login_error'] = translate('you_have_been_blocked_by_the_admin');
+            }
+            elseif ($this->session->flashdata('alert') == "not_sent") {
+                $page_data['login_error'] = translate('error_sending_email');
+            }
+            elseif ($this->session->flashdata('alert') == "not_sent") {
+                $page_data['login_error'] = translate('the_email_you_have_entered_is_invalid');
+            }
+            elseif ($this->session->flashdata('alert') == "email_sent") {
+                $page_data['sent_email'] = translate('please_check_your_email_for_new_password');
+            }
+            elseif ($this->session->flashdata('alert') == "register_success") {
+                $page_data['register_success'] = translate('you_have_registered_successfully._please_log_in_to_continue');
+            }
+             elseif ($this->session->flashdata('alert') == "unapproved") {
+                $page_data['login_error'] = translate('account_not_approved._wait_for_approval!');
+            }
+
+            $this->load->view('front/login', $page_data);
+        }
+    }
+
+    function login_msg()
+    {
+        if ($this->member_permission() == TRUE) {
+            redirect(base_url().'home/', 'refresh');
+        }
+        if ($this->member_permission() == TRUE) {
+            redirect(base_url().'home/', 'refresh');
+        }
+        else{
+            $page_data['page'] = "login_msg";
+            $this->load->view('front/login_msg', $page_data);
+        }
+        
+    }
+    function send_otp()
+    {
+        $username = $this->session->userdata('member_email');
+
+        $result = $this->db->get_where('member',array('email'=>$username))->row();
+
+        $data = array();
+        if($result)
+        {
+            $mobile=$result->mobile;
+            
+        }
+        $otp=$this->session->userdata('mobile_otp');
+        // $mobile=$this->session->userdata('mobile');
+        $message=$otp." is your OTP for SouthMatrimony Registration, Thanks.";
+        $this->load->model('sms_model');
+        $this->sms_model->send_sms_via_msg91($message,$mobile);
+       
+            $this->session->set_flashdata('otp_send', 'OTP Sent to registered mobile number.');
+            // redirect(base_url().'admin/send_sms', 'refresh');
+        
+        redirect(base_url().'home/verify_otp', 'refresh');
+    }
+    function verify_otp()
+    {
+        if(isset($_POST['otp']))
+        {
+            if($this->session->userdata('mobile_otp')==$_POST['otp'])
+            {
+               
+                    $member_id = $this->session->userdata('member_id');
+                   
+                    $data['mobile_status'] = 0;
+                    // echo $member_id;
+                    // die();
+                        $this->db->where('member_id', $member_id);
+                        $this->db->update('member', $data);
+                        $this->session->set_flashdata('alert','Mobile Number Verified');
+                        
+                        
+                    
+                
+                // redirect( base_url().'home/login', 'refresh' );
+                redirect( base_url().'home/profile', 'refresh' );
+            }
+            else {
+                $this->session->set_flashdata('alert','Invalid OTP');
+            }
+        }
+        $this->load->view('front/verify_otp');
+    }
+    function check_login()
+    {
+        if ($this->member_permission() == TRUE) {
+            redirect(base_url().'home/', 'refresh');
+        }
+        else{
+            $username = $this->input->post('email');
+            $password = sha1($this->input->post('password'));
+
+            $remember_me = $this->input->post('remember_me');
+            $member_approval = $this->db->get_where('general_settings', array('type' => 'member_approval_by_admin'))->row()->value;
+            $result = $this->db->get_where('member',array('email'=>$username, 'password'=>$password))->row();
+
+            $data = array();
+            if($result)
+            {
+                
+                if ($result->mobile_status != '0') {
+                   
+                    $data['login_state'] = 'yes';
+                            $data['member_id'] = $result->member_id;
+                            $data['member_name'] = $result->first_name;
+                            $data['member_email'] = $result->email;
+                            // $data['mobile_no']=$result->mobile;
+
+                            if ($remember_me == 'checked') {
+                                
+                                setcookie('cookie_member_id', $this->session->userdata('member_id'), time() + (1296000), "/");
+                                setcookie('cookie_member_name', $this->session->userdata('member_name'), time() + (1296000), "/");
+                                setcookie('cookie_member_email', $this->session->userdata('member_email'), time() + (1296000), "/");
+                                $data['mobile_otp'] = $result->mobile_status;
+                                $this->session->set_userdata($data);
+                            } else {
+                                $data['mobile_otp'] = $result->mobile_status;
+                                $this->session->set_userdata($data);
+                            }
+                    // $this->session->set_userdata($data);
+                    $data['mobile_no']=$result->mobile;
+                    redirect( base_url().'home/verify_otp', 'refresh' );
+                    // $this->load->view('front/verify_otp', $page_data);
+                }
+                else{
+
+                
+                if($member_approval == 'yes'){
+                    if ($result->status == "approved") {
+                        if ($result->is_blocked == "no") {
+                            $data['login_state'] = 'yes';
+                            $data['member_id'] = $result->member_id;
+                            $data['member_name'] = $result->first_name;
+                            $data['member_email'] = $result->email;
+
+                            if ($remember_me == 'checked') {
+                                $this->session->set_userdata($data);
+                                setcookie('cookie_member_id', $this->session->userdata('member_id'), time() + (1296000), "/");
+                                setcookie('cookie_member_name', $this->session->userdata('member_name'), time() + (1296000), "/");
+                                setcookie('cookie_member_email', $this->session->userdata('member_email'), time() + (1296000), "/");
+                            } else {
+                                $this->session->set_userdata($data);
+                            }
+
+                            redirect( base_url().'home/profile', 'refresh' );
+                        }
+                        elseif ($result->is_blocked == "yes") {
+                            $this->session->set_flashdata('alert','blocked');
+
+                            redirect( base_url().'home/login', 'refresh' );
+                        }
+                    }
+                    elseif($result->status == "pending")
+                    {
+                        $this->session->set_flashdata('alert','unapproved');
+                        redirect( base_url().'home/login', 'refresh' );
+                    }
+                } else{
+                    if ($result->is_blocked == "no") {
+                        $data['login_state'] = 'yes';
+                        $data['member_id'] = $result->member_id;
+                        $data['member_name'] = $result->first_name;
+                        $data['member_email'] = $result->email;
+
+                        if ($remember_me == 'checked') {
+                            $this->session->set_userdata($data);
+                            setcookie('cookie_member_id', $this->session->userdata('member_id'), time() + (1296000), "/");
+                            setcookie('cookie_member_name', $this->session->userdata('member_name'), time() + (1296000), "/");
+                            setcookie('cookie_member_email', $this->session->userdata('member_email'), time() + (1296000), "/");
+                        } else {
+                            $this->session->set_userdata($data);
+                        }
+
+                        redirect( base_url().'home/profile', 'refresh' );
+                    }
+                    elseif ($result->is_blocked == "yes") {
+                        $this->session->set_flashdata('alert','blocked');
+
+                        redirect( base_url().'home/login', 'refresh' );
+                    }
+                }
+            }
                 
             }
             else {
@@ -3536,6 +4067,7 @@ class Home extends CI_Controller {
                 redirect( base_url().'home/login', 'refresh' );
             }
         }
+    
     }
 
     function forget_pass($para1="") {
@@ -3930,7 +4462,7 @@ class Home extends CI_Controller {
                                 if($member_approval == 'yes'){
                                     // $msg = 'done';
                                     if ($this->Email_model->account_opening_from_users('member', $data['email'], $this->input->post('password')) == false) {
-                                        //$msg = 'done_but_not_sent';
+                                        $msg = 'done_but_not_sent';
                                     } else {
                                         $msg = 'done_and_sent';
                                     }
