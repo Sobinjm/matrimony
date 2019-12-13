@@ -158,11 +158,12 @@
                                             </p>
                                         </div>
                                     </div>
+                                   
+                                    <button type="submit" class="btn btn-styled btn-sm btn-block btn-base-1 z-depth-2-bottom mt-4"><?php echo translate('log_in')?></button>
                                     <?php if(!empty($authURL)){ ?>
-    <a href="<?php echo $authURL; ?>"><img src="<?php echo base_url('assets/images/fb-login-btn.png'); ?>"> Face Book</a>
+   <center> <h4>OR</h4><a href="<?php echo $authURL; ?>"><img src="<?php echo base_url('uploads/login_image/fb_login.png'); ?>" style="width:100%;"></a></center>
 
                                     <?php } ?>
-                                    <button type="submit" class="btn btn-styled btn-sm btn-block btn-base-1 z-depth-2-bottom mt-4"><?php echo translate('log_in')?></button>
                                     <div class="row pt-3">
                                         <div class="col-6" style="font-size: 12px;">
                                             <div class="checkbox">

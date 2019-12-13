@@ -1754,12 +1754,17 @@ class Home extends CI_Controller {
                 // ------------------------------------ Life Style------------------------------------ //
 
                 // ------------------------------------ Astronomic Information------------------------------------ //
-                $astronomic_information[] = array('sun_sign'    =>  $this->input->post('sun_sign'),
+                $astronomic_information[] = array(
+                                    'star'    =>  $this->input->post('star_value'),
+                                    'lagnam'    =>  $this->input->post('lagnam_value'),
+                                    'sun_sign'    =>  $this->input->post('sun_sign'),
                                     'moon_sign'                 =>  $this->input->post('moon_sign'),
                                     'time_of_birth'             =>  $this->input->post('time_of_birth'),
                                     'city_of_birth'             =>  $this->input->post('city_of_birth')
                                     );
                 $data['astronomic_information'] = json_encode($astronomic_information);
+                $data['star']    =  $this->input->post('star_value');
+            $data['lagnam']    =  $this->input->post('lagnam_value');
                 // ------------------------------------ Astronomic Information------------------------------------ //
 
                 // ------------------------------------Permanent Address------------------------------------ //
@@ -2109,13 +2114,17 @@ class Home extends CI_Controller {
         elseif ($para1=="update_astronomic_information") {
 
             // ------------------------------------ Astronomic Information------------------------------------ //
-            $astronomic_information[] = array('sun_sign'    =>  $this->input->post('sun_sign'),
+            $astronomic_information[] = array('star'    =>  $this->input->post('star_value'),
+                                'lagnam'    =>  $this->input->post('lagnam_value'),
+                                'sun_sign'    =>  $this->input->post('sun_sign'),
                                 'moon_sign'                 =>  $this->input->post('moon_sign'),
                                 'time_of_birth'             =>  $this->input->post('time_of_birth'),
                                 'city_of_birth'             =>  $this->input->post('city_of_birth')
                                 );
 
             $data['astronomic_information'] = json_encode($astronomic_information);
+            $data['star']    =  $this->input->post('star_value');
+            $data['lagnam']    =  $this->input->post('lagnam_value');
             $this->db->where('member_id', $this->session->userdata('member_id'));
             $result = $this->db->update('member', $data);
             recache();
@@ -3450,7 +3459,8 @@ class Home extends CI_Controller {
                             }
                     // $this->session->set_userdata($data);
                     $data['mobile_no']=$result->mobile;
-                    redirect( base_url().'home/verify_otp', 'refresh' );
+                    // redirect( base_url().'home/verify_otp', 'refresh' );
+                    redirect( base_url().'home/send_otp', 'refresh' );
                     // $this->load->view('front/verify_otp', $page_data);
                 }
                 else{
@@ -3998,8 +4008,8 @@ class Home extends CI_Controller {
                             }
                     // $this->session->set_userdata($data);
                     $data['mobile_no']=$result->mobile;
-                    redirect( base_url().'home/verify_otp', 'refresh' );
-                    // $this->load->view('front/verify_otp', $page_data);
+                    // redirect( base_url().'home/verify_otp', 'refresh' );
+                    redirect( base_url().'home/send_otp', 'refresh' );
                 }
                 else{
 
@@ -4034,6 +4044,10 @@ class Home extends CI_Controller {
                         $this->session->set_flashdata('alert','unapproved');
                         redirect( base_url().'home/login', 'refresh' );
                     }
+                    else{
+                        $this->session->set_flashdata('alert','unapproved');
+                        redirect( base_url().'home/login', 'refresh' );
+                    }
                 } else{
                     if ($result->is_blocked == "no") {
                         $data['login_state'] = 'yes';
@@ -4053,6 +4067,11 @@ class Home extends CI_Controller {
                         redirect( base_url().'home/profile', 'refresh' );
                     }
                     elseif ($result->is_blocked == "yes") {
+                        $this->session->set_flashdata('alert','blocked');
+
+                        redirect( base_url().'home/login', 'refresh' );
+                    }
+                    else{
                         $this->session->set_flashdata('alert','blocked');
 
                         redirect( base_url().'home/login', 'refresh' );

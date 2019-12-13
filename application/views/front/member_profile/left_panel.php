@@ -173,7 +173,16 @@
                 <div class="col-sm-6 pl-1 size-sml">
                     <a class="btn btn-styled btn-block btn-sm btn-white z-depth-2-bottom" id="ignore_a_<?=$get_member[0]->member_id?>" onclick="return confirm_ignore(<?=$get_member[0]->member_id?>)"><i class="fa fa-ban"></i> <?=translate('ignore')?></a>
                 </div>
+                
             </div>
+            <div class="row mt-2">
+            <div class="col-sm-6 pl-1 size-sml">
+                    <a class="btn btn-styled btn-block btn-sm btn-white z-depth-2-bottom" id="star_m_<?=$get_member[0]->member_id?>" onclick="return print_star(<?=$get_member[0]->member_id?>)"><i class="fa fa-ban"></i> <?=translate('star_match')?></a>
+                </div>
+                <div class="col-sm-6 pl-1 size-sml">
+                    <a class="btn btn-styled btn-block btn-sm btn-white z-depth-2-bottom" id="lagnam_m_<?=$get_member[0]->member_id?>" onclick="return print_lagnam(<?=$get_member[0]->member_id?>)"><i class="fa fa-ban"></i> <?=translate('lagnam_match')?></a>
+                </div>
+            </div> 
             <div class="row mt-2">
                 <div class="col-sm-6 pr-1 size-smr">
                     <?php

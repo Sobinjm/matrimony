@@ -116,7 +116,7 @@
                 <button type="button" class="btn btn-danger btn-sm btn-icon-only btn-shadow" onclick="load_section('spiritual_and_social_background')"><i class="ion-close"></i></button>
             </div>
         </div>
-        
+         
         <div class='clearfix'></div>
         <form id="form_spiritual_and_social_background" class="form-default" role="form">
             <div class="row">
@@ -124,7 +124,7 @@
                     <div class="form-group has-feedback">
                         <label for="religion" class="text-uppercase c-gray-light"><?php echo translate('religion')?></label>
                         <?php 
-                            echo $this->Crud_model->select_html('religion', 'religion', 'name', 'edit', 'form-control form-control-sm selectpicker present_religion_edit', $spiritual_and_social_background_data[0]['religion'], '', '', '');
+                            echo $this->Crud_model->select_html('religion', 'religion', 'name', 'edit', 'form-control form-control-sm selectpicker present_star_edit', '', '', '', '');
                         ?>
                         <span class="glyphicon form-control-feedback" aria-hidden="true"></span>
                         <div class="help-block with-errors"></div>
